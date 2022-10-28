@@ -3,6 +3,7 @@ mod impls;
 mod store;
 mod env;
 mod utils;
+mod cert;
 
 use ic_cdk::api::management_canister::main::{CanisterIdRecord, deposit_cycles};
 use ic_cdk_macros::{init, update, pre_upgrade, post_upgrade, query};
@@ -14,6 +15,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use ic_certified_map::{labeled, labeled_hash, AsHashTree, Hash, RbTree};
 use serde_bytes::ByteBuf;
+use crate::cert::{make_asset_certificate_header, update_root_hash};
 
 use crate::store::{commit_batch, create_batch, create_chunk, delete_asset, get_asset, get_asset_for_url, get_keys};
 use crate::utils::{principal_not_equal, is_manager};
@@ -64,13 +66,6 @@ fn post_upgrade() {
     });
 
     update_root_hash(&asset_hashes);
-}
-
-const LABEL_ASSETS: &[u8] = b"http_assets";
-
-fn update_root_hash(a: &AssetHashes) {
-    let prefixed_root_hash = &labeled_hash(LABEL_ASSETS, &a.0.root_hash());
-    ic_cdk::api::set_certified_data(&prefixed_root_hash[..]);
 }
 
 fn upgrade_assets(UpgradeState {entries, user: _}: UpgradeState) -> Assets {

@@ -123,7 +123,7 @@ pub mod http {
     use serde_bytes::ByteBuf;
 
     #[derive(CandidType, Deserialize, Clone)]
-    pub struct HeaderField(String, String);
+    pub struct HeaderField(pub String, pub String);
 
     #[derive(CandidType, Deserialize, Clone)]
     pub struct HttpRequest {
