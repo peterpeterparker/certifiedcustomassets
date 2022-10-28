@@ -24,6 +24,12 @@ impl AssetHashes {
             .0
             .insert(asset.key.fullPath.clone(), asset.encoding.sha256);
     }
+
+    pub(crate) fn delete(&mut self, full_path: &String) {
+        self
+            .0
+            .delete(full_path.as_bytes());
+    }
 }
 
 impl From<&Vec<Vec<u8>>> for AssetEncoding {

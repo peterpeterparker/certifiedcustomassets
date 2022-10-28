@@ -42,7 +42,7 @@ pub fn get_asset(full_path: String, token: Option<String>) -> Result<Asset, &'st
 }
 
 pub fn delete_asset(param: Del) -> Result<Asset, &'static str> {
-    STATE.with(|state| delete_asset_impl(param, &mut state.borrow_mut().stable))
+    STATE.with(|state| delete_asset_impl(param, &mut state.borrow_mut()))
 }
 
 pub fn get_keys(folder: Option<String>) -> Vec<AssetKey> {
@@ -108,13 +108,14 @@ fn get_keys_impl(folder: Option<String>, state: &StableState) -> Vec<AssetKey> {
     }
 }
 
-fn delete_asset_impl(Del { fullPath, token }: Del, state: &mut StableState) -> Result<Asset, &'static str> {
-    let result = get_asset_impl(fullPath.clone(), token, state);
+fn delete_asset_impl(Del { fullPath, token }: Del, state: &mut State) -> Result<Asset, &'static str> {
+    let result = get_asset_impl(fullPath.clone(), token, &state.stable);
 
     match result {
         Err(err) => Err(err),
         Ok(asset) => {
-            state.assets.remove(&*fullPath);
+            state.stable.assets.remove(&*fullPath);
+            delete_certified_asset(state, &fullPath);
             Ok(asset)
         }
     }
@@ -202,20 +203,12 @@ fn commit_batch_impl(
             match asset {
                 Err(err) => Err(err),
                 Ok(asset) => {
-                    update_certified_assets(state, &asset);
+                    update_certified_asset(state, &asset);
                     Ok("Batch committed and certified assets updated.")
                 }
             }
         },
     }
-}
-
-fn update_certified_assets(state: &mut State, asset: &Asset) {
-    // 1. Replace or insert the new asset in tree
-    state.runtime.asset_hashes.insert(&asset);
-
-    // 2. Update the root hash and the canister certified data
-    update_certified_data(&state.runtime.asset_hashes);
 }
 
 fn commit_chunks(
@@ -301,4 +294,20 @@ fn clear_batch(batchId: u128, chunkIds: Vec<u128>, state: &mut RuntimeState) {
     }
 
     state.batches.remove(&batchId);
+}
+
+fn update_certified_asset(state: &mut State, asset: &Asset) {
+    // 1. Replace or insert the new asset in tree
+    state.runtime.asset_hashes.insert(&asset);
+
+    // 2. Update the root hash and the canister certified data
+    update_certified_data(&state.runtime.asset_hashes);
+}
+
+fn delete_certified_asset(state: &mut State, full_path: &String) {
+    // 1. Remove the asset in tree
+    state.runtime.asset_hashes.delete(full_path);
+
+    // 2. Update the root hash and the canister certified data
+    update_certified_data(&state.runtime.asset_hashes);
 }
