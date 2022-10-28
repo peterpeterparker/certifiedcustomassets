@@ -70,6 +70,13 @@ const uploadAssets = async () => {
       mimeType: "text/html"
     }),
     uploadHtml({
+      src: "./data/post.html",
+      name: "post123456789",
+      folder: "d",
+      fullPath: "/d/post123456789",
+      mimeType: "text/html"
+    }),
+    uploadHtml({
       src: "./data/sample_1920x1280.png",
       name: "sample_1920x1280.png",
       folder: "images",
