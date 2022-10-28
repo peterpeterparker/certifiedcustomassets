@@ -1,4 +1,5 @@
 mod types;
+mod impls;
 mod store;
 mod env;
 mod utils;
@@ -11,11 +12,13 @@ use ic_cdk::{storage, id, api};
 use candid::{decode_args, Principal};
 use std::cell::RefCell;
 use std::collections::HashMap;
+use ic_certified_map::{labeled, labeled_hash, AsHashTree, Hash, RbTree};
 
 use crate::store::{commit_batch, create_batch, create_chunk, delete_asset, get_asset, get_asset_for_url, get_keys};
 use crate::utils::{principal_not_equal, is_manager};
-use crate::types::{interface::{InitUpload, UploadChunk, CommitBatch, Del}, storage::{AssetKey, State, Chunk, Asset, AssetEncoding, StableState, RuntimeState}, http::{HttpRequest, HttpResponse, HeaderField, StreamingStrategy, StreamingCallbackToken, StreamingCallbackHttpResponse}};
-use crate::types::{storage::{Assets}, migration::{UpgradeState}};
+use crate::types::{interface::{InitUpload, UploadChunk, CommitBatch, Del}, store::{State, StableState, RuntimeState, Assets}, storage::{AssetKey, Chunk, Asset, AssetEncoding}, http::{HttpRequest, HttpResponse, HeaderField, StreamingStrategy, StreamingCallbackToken, StreamingCallbackHttpResponse}};
+use crate::types::{migration::{UpgradeState}};
+use crate::types::assets::AssetHashes;
 
 thread_local! {
     static STATE: RefCell<State> = RefCell::default();
@@ -32,6 +35,7 @@ fn init() {
             runtime: RuntimeState {
                 chunks: HashMap::new(),
                 batches: HashMap::new(),
+                asset_hashes: AssetHashes::default(),
             },
         };
     });
@@ -46,14 +50,26 @@ fn pre_upgrade() {
 fn post_upgrade() {
     let (stable, ): (StableState, ) = ic_cdk::storage::stable_restore().unwrap();
 
+    let asset_hashes = AssetHashes::from(&stable.assets);
+
     // Populate state
     STATE.with(|state| *state.borrow_mut() = State {
         stable,
         runtime: RuntimeState {
             chunks: HashMap::new(),
             batches: HashMap::new(),
+            asset_hashes: asset_hashes.clone()
         },
     });
+
+    update_root_hash(&asset_hashes);
+}
+
+const LABEL_ASSETS: &[u8] = b"http_assets";
+
+fn update_root_hash(a: &AssetHashes) {
+    let prefixed_root_hash = &labeled_hash(LABEL_ASSETS, &a.0.root_hash());
+    ic_cdk::api::set_certified_data(&prefixed_root_hash[..]);
 }
 
 fn upgrade_assets(UpgradeState {entries, user: _}: UpgradeState) -> Assets {

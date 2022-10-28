@@ -1,20 +1,18 @@
 // Non snake case for backwards compatibility
 #![allow(non_snake_case)]
 
-pub mod storage {
+pub mod store {
+    use std::cell::RefCell;
     use std::collections::HashMap;
-    use candid::{Principal, CandidType, Int};
-    use serde::Deserialize;
-    use std::clone::Clone;
-    use crate::types::http::HeaderField;
-
-    // Internal types
+    use candid::{CandidType, Deserialize, Principal};
+    use crate::types::assets::AssetHashes;
+    use crate::types::storage::{Asset, Batch, Chunk};
 
     pub type Batches = HashMap<u128, Batch>;
     pub type Chunks = HashMap<u128, Chunk>;
     pub type Assets = HashMap<String, Asset>;
 
-    #[derive(Default, CandidType, Deserialize, Clone)]
+    #[derive(Default, Clone)]
     pub struct State {
         pub stable: StableState,
         pub runtime: RuntimeState,
@@ -26,13 +24,29 @@ pub mod storage {
         pub assets: Assets,
     }
 
-    #[derive(Default, CandidType, Deserialize, Clone)]
+    #[derive(Default, Clone)]
     pub struct RuntimeState {
         pub chunks: Chunks,
         pub batches: Batches,
+        pub asset_hashes: AssetHashes,
     }
+}
 
-    // Exposed types
+pub mod assets {
+    use candid::{CandidType, Deserialize};
+    use std::clone::Clone;
+    use ic_certified_map::{Hash, RbTree};
+
+    #[derive(Default, Clone)]
+    pub struct AssetHashes(pub(crate) RbTree<Vec<u8>, Hash>);
+}
+
+pub mod storage {
+    use std::collections::HashMap;
+    use candid::{Principal, CandidType, Int};
+    use serde::Deserialize;
+    use std::clone::Clone;
+    use crate::types::http::HeaderField;
 
     #[derive(CandidType, Deserialize, Clone)]
     pub struct Chunk {

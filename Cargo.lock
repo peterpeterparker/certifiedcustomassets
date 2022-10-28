@@ -162,7 +162,9 @@ dependencies = [
  "candid",
  "ic-cdk",
  "ic-cdk-macros",
+ "ic-certified-map",
  "serde",
+ "sha2",
 ]
 
 [[package]]
@@ -352,6 +354,17 @@ dependencies = [
  "serde",
  "serde_tokenstream",
  "syn",
+]
+
+[[package]]
+name = "ic-certified-map"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0ea6b4530bf4e304ba870da9f58f6e10a84c74fe2fdec574ec7a316f031c37fd"
+dependencies = [
+ "serde",
+ "serde_bytes",
+ "sha2",
 ]
 
 [[package]]

@@ -4,7 +4,7 @@
 use ic_cdk::{api::{time}};
 use candid::{Int};
 
-use crate::{RuntimeState, StableState, STATE, types::storage::{AssetKey, Batch, State, Chunk}};
+use crate::{RuntimeState, StableState, STATE, types::{storage::{AssetKey, Batch, Chunk}, store::{State}}};
 use crate::types::interface::{CommitBatch, Del};
 use crate::types::storage::{Asset, AssetEncoding};
 
