@@ -214,22 +214,12 @@ fn commit_chunks(
         return Err("No chunk to commit.");
     }
 
-    let mut total_length: u128 = 0;
-
-    for chunk in content_chunks.iter() {
-        total_length += u128::try_from(chunk.len()).unwrap();
-    }
-
     let key = batch.clone().key;
 
     state.stable.assets.insert(batch.clone().key.fullPath, Asset {
         key,
         headers,
-        encoding: AssetEncoding {
-            modified: Int::from(time()),
-            contentChunks: content_chunks,
-            totalLength: total_length,
-        },
+        encoding: AssetEncoding::from(&content_chunks),
     });
 
     clear_batch(batchId, chunkIds, &mut state.runtime);

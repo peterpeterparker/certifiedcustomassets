@@ -38,7 +38,7 @@ pub mod assets {
     use ic_certified_map::{Hash, RbTree};
 
     #[derive(Default, Clone)]
-    pub struct AssetHashes(pub(crate) RbTree<Vec<u8>, Hash>);
+    pub struct AssetHashes(pub(crate) RbTree<String, Hash>);
 }
 
 pub mod storage {
@@ -47,6 +47,7 @@ pub mod storage {
     use serde::Deserialize;
     use std::clone::Clone;
     use crate::types::http::HeaderField;
+    use ic_certified_map::{Hash};
 
     #[derive(CandidType, Deserialize, Clone)]
     pub struct Chunk {
@@ -59,6 +60,7 @@ pub mod storage {
         pub modified: Int,
         pub contentChunks: Vec<Vec<u8>>,
         pub totalLength: u128,
+        pub sha256: Hash,
     }
 
     #[derive(CandidType, Deserialize, Clone)]
@@ -71,8 +73,6 @@ pub mod storage {
         pub fullPath: String,
         // ?token=1223-3345-5564-3333
         pub token: Option<String>,
-        // The sha256 representation of the content
-        pub sha256: Option<Vec<u8>>,
     }
 
     #[derive(CandidType, Deserialize, Clone)]
@@ -120,6 +120,7 @@ pub mod interface {
 
 pub mod http {
     use candid::{CandidType, Deserialize, Func};
+    use serde_bytes::ByteBuf;
 
     #[derive(CandidType, Deserialize, Clone)]
     pub struct HeaderField(String, String);
@@ -153,7 +154,7 @@ pub mod http {
         pub fullPath: String,
         pub token: Option<String>,
         pub headers: Vec<HeaderField>,
-        pub sha256: Option<Vec<u8>>,
+        pub sha256: Option<ByteBuf>,
         pub index: usize,
     }
 

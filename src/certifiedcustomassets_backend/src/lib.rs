@@ -13,6 +13,7 @@ use candid::{decode_args, Principal};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use ic_certified_map::{labeled, labeled_hash, AsHashTree, Hash, RbTree};
+use serde_bytes::ByteBuf;
 
 use crate::store::{commit_batch, create_batch, create_chunk, delete_asset, get_asset, get_asset_for_url, get_keys};
 use crate::utils::{principal_not_equal, is_manager};
@@ -158,7 +159,7 @@ fn create_token(key: AssetKey, chunk_index: usize, encoding: &AssetEncoding, hea
         token: key.token,
         headers: headers.clone(),
         index: chunk_index + 1,
-        sha256: key.sha256,
+        sha256: Some(ByteBuf::from(encoding.sha256)),
     })
 }
 

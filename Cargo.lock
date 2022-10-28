@@ -164,6 +164,7 @@ dependencies = [
  "ic-cdk-macros",
  "ic-certified-map",
  "serde",
+ "serde_bytes",
  "sha2",
 ]
 
