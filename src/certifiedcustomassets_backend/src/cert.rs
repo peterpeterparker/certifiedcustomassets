@@ -3,11 +3,11 @@ use serde::Serialize;
 use crate::types::assets::AssetHashes;
 use ic_cdk::api::{canister_balance128, caller, trap};
 use crate::types::http::HeaderField;
-use crate::types::storage::AssetKey;
+use crate::types::storage::{Asset, AssetKey};
 
 const LABEL_ASSETS: &[u8] = b"http_assets";
 
-pub fn update_root_hash(a: &AssetHashes) {
+pub fn update_certified_data(a: &AssetHashes) {
     let prefixed_root_hash = &labeled_hash(LABEL_ASSETS, &a.0.root_hash());
     ic_cdk::api::set_certified_data(&prefixed_root_hash[..]);
 }

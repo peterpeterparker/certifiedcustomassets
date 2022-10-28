@@ -5,7 +5,8 @@ use ic_cdk::{api::{time}};
 use candid::{Int};
 
 use crate::{RuntimeState, StableState, STATE, types::{storage::{AssetKey, Batch, Chunk}, store::{State}}};
-use crate::cert::make_asset_certificate_header;
+use crate::cert::{make_asset_certificate_header, update_certified_data};
+use crate::types::assets::AssetHashes;
 use crate::types::http::HeaderField;
 use crate::types::interface::{CommitBatch, Del};
 use crate::types::storage::{Asset, AssetEncoding};
@@ -196,15 +197,32 @@ fn commit_batch_impl(
 
     match batch {
         None => Err("No batch to commit."),
-        Some(b) => commit_chunks(commitBatch, b, state),
+        Some(b) => {
+            let asset = commit_chunks(commitBatch, b, state);
+            match asset {
+                Err(err) => Err(err),
+                Ok(asset) => {
+                    update_certified_assets(state, &asset);
+                    Ok("Batch committed and certified assets updated.")
+                }
+            }
+        },
     }
+}
+
+fn update_certified_assets(state: &mut State, asset: &Asset) {
+    // 1. Replace or insert the new asset in tree
+    state.runtime.asset_hashes.insert(&asset);
+
+    // 2. Update the root hash and the canister certified data
+    update_certified_data(&state.runtime.asset_hashes);
 }
 
 fn commit_chunks(
     CommitBatch { chunkIds, batchId, headers }: CommitBatch,
     batch: &Batch,
     state: &mut State,
-) -> Result<&'static str, &'static str> {
+) -> Result<Asset, &'static str> {
     let now = time();
 
     if now > batch.expiresAt {
@@ -237,15 +255,17 @@ fn commit_chunks(
 
     let key = batch.clone().key;
 
-    state.stable.assets.insert(batch.clone().key.fullPath, Asset {
+    let asset: Asset = Asset {
         key,
         headers,
         encoding: AssetEncoding::from(&content_chunks),
-    });
+    };
+
+    state.stable.assets.insert(batch.clone().key.fullPath, asset.clone());
 
     clear_batch(batchId, chunkIds, &mut state.runtime);
 
-    return Ok("Batch committed.");
+    return Ok(asset);
 }
 
 fn clear_expired_batches(state: &mut RuntimeState) {

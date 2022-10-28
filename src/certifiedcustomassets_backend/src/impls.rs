@@ -2,7 +2,7 @@ use candid::Int;
 use ic_certified_map::{Hash};
 use crate::types::assets::AssetHashes;
 use crate::types::store::Assets;
-use crate::types::storage::AssetEncoding;
+use crate::types::storage::{Asset, AssetEncoding};
 use sha2::{Digest, Sha256};
 use ic_cdk::{api::{time}};
 
@@ -11,12 +11,18 @@ impl From<&Assets> for AssetHashes {
         let mut asset_hashes = Self::default();
 
         for (_key, asset) in assets.iter() {
-            asset_hashes
-                .0
-                .insert(asset.key.fullPath.clone(), asset.encoding.sha256);
+            asset_hashes.insert(asset);
         }
 
         asset_hashes
+    }
+}
+
+impl AssetHashes {
+    pub(crate) fn insert(&mut self, asset: &Asset) {
+        self
+            .0
+            .insert(asset.key.fullPath.clone(), asset.encoding.sha256);
     }
 }
 

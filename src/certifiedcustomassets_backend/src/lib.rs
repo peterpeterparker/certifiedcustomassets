@@ -15,7 +15,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use ic_certified_map::{labeled, labeled_hash, AsHashTree, Hash, RbTree};
 use serde_bytes::ByteBuf;
-use crate::cert::{make_asset_certificate_header, update_root_hash};
+use crate::cert::{make_asset_certificate_header, update_certified_data};
 
 use crate::store::{commit_batch, create_batch, create_chunk, delete_asset, get_asset, get_asset_for_url, get_keys};
 use crate::utils::{principal_not_equal, is_manager};
@@ -65,7 +65,7 @@ fn post_upgrade() {
         },
     });
 
-    update_root_hash(&asset_hashes);
+    update_certified_data(&asset_hashes);
 }
 
 fn upgrade_assets(UpgradeState {entries, user: _}: UpgradeState) -> Assets {
