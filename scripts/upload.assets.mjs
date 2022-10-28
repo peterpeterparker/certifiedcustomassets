@@ -77,6 +77,13 @@ const uploadAssets = async () => {
       token: "123",
       mimeType: "image/jpeg"
     }),
+    uploadHtml({
+      src: "./data/favicon.ico",
+      name: "favicon.ico",
+      folder: "resources",
+      fullPath: "/favicon.ico",
+      mimeType: "image/x-icon"
+    }),
   ]);
 };
 
