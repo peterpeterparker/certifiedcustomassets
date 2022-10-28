@@ -21,13 +21,13 @@ impl From<&Assets> for AssetHashes {
 impl AssetHashes {
     pub(crate) fn insert(&mut self, asset: &Asset) {
         self
-            .0
+            .tree
             .insert(asset.key.fullPath.clone(), asset.encoding.sha256);
     }
 
     pub(crate) fn delete(&mut self, full_path: &String) {
         self
-            .0
+            .tree
             .delete(full_path.as_bytes());
     }
 }

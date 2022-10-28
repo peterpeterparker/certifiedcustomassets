@@ -33,12 +33,13 @@ pub mod store {
 }
 
 pub mod assets {
-    use candid::{CandidType, Deserialize};
     use std::clone::Clone;
     use ic_certified_map::{Hash, RbTree};
 
     #[derive(Default, Clone)]
-    pub struct AssetHashes(pub(crate) RbTree<String, Hash>);
+    pub struct AssetHashes {
+        pub tree: RbTree<String, Hash>,
+    }
 }
 
 pub mod storage {
