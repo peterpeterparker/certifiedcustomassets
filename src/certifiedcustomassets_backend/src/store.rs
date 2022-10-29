@@ -56,7 +56,8 @@ fn get_certified_asset_impl(full_path: String, token: Option<String>, state: &St
         Err(err) => Err(err),
         Ok(asset) => {
             let mut certified_headers = asset.headers.clone();
-            let certificate_header = make_asset_certificate_header(&state.runtime.asset_hashes, asset.key.fullPath.clone());
+            // TODO: move out of store
+            let certificate_header = make_asset_certificate_header(&state.runtime.asset_hashes, asset.key.fullPath.clone()).unwrap();
             certified_headers.push(certificate_header);
 
             Ok(Asset {

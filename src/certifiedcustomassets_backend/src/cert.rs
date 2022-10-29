@@ -5,6 +5,7 @@ use serde_cbor::ser::{Serializer};
 use base64::{encode};
 
 use crate::types::{assets::AssetHashes, http::HeaderField};
+use crate::types::storage::Asset;
 
 const LABEL_ASSETS: &[u8] = b"http_assets";
 
@@ -13,28 +14,34 @@ pub fn update_certified_data(asset_hashes: &AssetHashes) {
     set_certified_data(&prefixed_root_hash[..]);
 }
 
-pub fn make_asset_certificate_header(asset_hashes: &AssetHashes, asset_name: String) -> HeaderField {
-    // TODO: Return result to get rid of trap
-    let certificate = data_certificate().unwrap_or_else(|| {
-        trap("data certificate is only available in query calls");
-        unreachable!()
-    });
+pub fn make_asset_certificate_header(asset_hashes: &AssetHashes, full_path: String) -> Result<HeaderField, &'static str> {
+    let certificate = data_certificate();
 
-    let witness = asset_hashes.tree.witness(asset_name.as_bytes());
+    match certificate {
+        None => Err("No certificate found."),
+        Ok(certificate) => make_asset_certificate_header_impl(certificate, asset_hashes, &full_path)
+    }
+}
+
+fn make_asset_certificate_header_impl(certificate: &Vec<u8>, asset_hashes: &AssetHashes, full_path: &String) -> Result<HeaderField, &'static str> {
+    let witness = asset_hashes.tree.witness(full_path.as_bytes());
     let tree = labeled(LABEL_ASSETS, witness);
 
     let mut serializer = Serializer::new(vec![]);
     serializer.self_describe().unwrap();
-    // TODO: Return result to get rid of trap
-    tree.serialize(&mut serializer)
-        .unwrap_or_else(|e| trap(&format!("failed to serialize a hash tree: {}", e)));
+    let result = tree.serialize(&mut serializer);
 
-    HeaderField (
-        "IC-Certificate".to_string(),
-        format!(
-            "certificate=:{}:, tree=:{}:",
-            encode(&certificate),
-            encode(&serializer.into_inner())
-        ),
-    )
+    match result {
+        Err(err) => Err(&format!("failed to serialize a hash tree: {}", e)),
+        Ok(_serialize) => {
+            Ok(HeaderField(
+                "IC-Certificate".to_string(),
+                format!(
+                    "certificate=:{}:, tree=:{}:",
+                    encode(&certificate),
+                    encode(&serializer.into_inner())
+                ),
+            ))
+        }
+    }
 }
