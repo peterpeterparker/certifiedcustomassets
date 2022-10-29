@@ -19,7 +19,7 @@ pub fn make_asset_certificate_header(asset_hashes: &AssetHashes, full_path: Stri
 
     match certificate {
         None => Err("No certificate found."),
-        Ok(certificate) => make_asset_certificate_header_impl(certificate, asset_hashes, &full_path)
+        Some(certificate) => make_asset_certificate_header_impl(&certificate, asset_hashes, &full_path)
     }
 }
 
@@ -32,7 +32,7 @@ fn make_asset_certificate_header_impl(certificate: &Vec<u8>, asset_hashes: &Asse
     let result = tree.serialize(&mut serializer);
 
     match result {
-        Err(err) => Err(&format!("failed to serialize a hash tree: {}", e)),
+        Err(_err) => Err("Failed to serialize a hash tree."),
         Ok(_serialize) => {
             Ok(HeaderField(
                 "IC-Certificate".to_string(),
