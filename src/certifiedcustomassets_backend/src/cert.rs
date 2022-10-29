@@ -14,16 +14,16 @@ pub fn update_certified_data(asset_hashes: &AssetHashes) {
     set_certified_data(&prefixed_root_hash[..]);
 }
 
-pub fn make_asset_certificate_header(asset_hashes: &AssetHashes, full_path: String) -> Result<HeaderField, &'static str> {
+pub fn build_asset_certificate_header(asset_hashes: &AssetHashes, full_path: String) -> Result<HeaderField, &'static str> {
     let certificate = data_certificate();
 
     match certificate {
         None => Err("No certificate found."),
-        Some(certificate) => make_asset_certificate_header_impl(&certificate, asset_hashes, &full_path)
+        Some(certificate) => build_asset_certificate_header_impl(&certificate, asset_hashes, &full_path)
     }
 }
 
-fn make_asset_certificate_header_impl(certificate: &Vec<u8>, asset_hashes: &AssetHashes, full_path: &String) -> Result<HeaderField, &'static str> {
+fn build_asset_certificate_header_impl(certificate: &Vec<u8>, asset_hashes: &AssetHashes, full_path: &String) -> Result<HeaderField, &'static str> {
     let witness = asset_hashes.tree.witness(full_path.as_bytes());
     let tree = labeled(LABEL_ASSETS, witness);
 

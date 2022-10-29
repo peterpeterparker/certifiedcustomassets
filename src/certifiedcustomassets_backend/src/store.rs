@@ -5,7 +5,7 @@ use ic_cdk::{api::{time}};
 use candid::{Int};
 
 use crate::{RuntimeState, StableState, STATE, types::{storage::{AssetKey, Batch, Chunk}, store::{State}}};
-use crate::cert::{make_asset_certificate_header, update_certified_data};
+use crate::cert::{update_certified_data};
 use crate::types::assets::AssetHashes;
 use crate::types::http::HeaderField;
 use crate::types::interface::{CommitBatch, Del};
@@ -38,7 +38,7 @@ pub fn get_asset_for_url(url: String) -> Result<Asset, &'static str> {
 }
 
 pub fn get_asset(full_path: String, token: Option<String>) -> Result<Asset, &'static str> {
-    STATE.with(|state| get_certified_asset_impl(full_path, token, &state.borrow()))
+    STATE.with(|state| get_asset_impl(full_path, token, &state.borrow().stable))
 }
 
 pub fn delete_asset(param: Del) -> Result<Asset, &'static str> {
@@ -47,26 +47,6 @@ pub fn delete_asset(param: Del) -> Result<Asset, &'static str> {
 
 pub fn get_keys(folder: Option<String>) -> Vec<AssetKey> {
     STATE.with(|state| get_keys_impl(folder, &state.borrow().stable))
-}
-
-fn get_certified_asset_impl(full_path: String, token: Option<String>, state: &State) -> Result<Asset, &'static str> {
-    let asset = get_asset_impl(full_path, token, &state.stable);
-
-    match asset {
-        Err(err) => Err(err),
-        Ok(asset) => {
-            let mut certified_headers = asset.headers.clone();
-            // TODO: move out of store
-            let certificate_header = make_asset_certificate_header(&state.runtime.asset_hashes, asset.key.fullPath.clone()).unwrap();
-            certified_headers.push(certificate_header);
-
-            Ok(Asset {
-                key: asset.key,
-                headers: certified_headers,
-                encoding: asset.encoding
-            })
-        }
-    }
 }
 
 fn get_asset_impl(full_path: String, token: Option<String>, state: &StableState) -> Result<Asset, &'static str> {

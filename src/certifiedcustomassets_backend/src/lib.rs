@@ -4,6 +4,7 @@ mod store;
 mod env;
 mod utils;
 mod cert;
+mod http;
 
 use ic_cdk::api::management_canister::main::{CanisterIdRecord, deposit_cycles};
 use ic_cdk_macros::{init, update, pre_upgrade, post_upgrade, query};
@@ -15,7 +16,8 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use ic_certified_map::{labeled, labeled_hash, AsHashTree, Hash, RbTree};
 use serde_bytes::ByteBuf;
-use crate::cert::{make_asset_certificate_header, update_certified_data};
+use crate::cert::{update_certified_data};
+use crate::http::build_certified_headers;
 
 use crate::store::{commit_batch, create_batch, create_chunk, delete_asset, get_asset, get_asset_for_url, get_keys};
 use crate::utils::{principal_not_equal, is_manager};
@@ -94,23 +96,32 @@ fn http_request(HttpRequest { method, url, headers: _, body: _ }: HttpRequest) -
     let result = get_asset_for_url(url);
 
     match result {
-        Ok(Asset { key, headers, encoding }) => {
-            return HttpResponse {
-                body: encoding.contentChunks[0].clone(),
-                headers: headers.clone(),
-                status_code: 200,
-                streaming_strategy: streaming_strategy(key, &encoding, &headers),
-            };
-        }
-        Err(_) => ()
-    }
+        Ok(asset) => {
+            let headers = build_certified_headers(&asset);
+            let Asset { key, headers: _, encoding } = asset;
 
-    return HttpResponse {
-        body: "Permission denied. Could not perform this operation.".as_bytes().to_vec(),
-        headers: Vec::new(),
-        status_code: 405,
-        streaming_strategy: None,
-    };
+            match headers {
+                Ok(headers) => HttpResponse {
+                    body: encoding.contentChunks[0].clone(),
+                    headers: headers.clone(),
+                    status_code: 200,
+                    streaming_strategy: streaming_strategy(key, &encoding, &headers),
+                },
+                Err(err) => HttpResponse {
+                    body: ["Permission denied. Invalid headers. ", err].join("").as_bytes().to_vec(),
+                    headers: Vec::new(),
+                    status_code: 405,
+                    streaming_strategy: None,
+                }
+            }
+        }
+        Err(err) => HttpResponse {
+            body: ["Permission denied. Could not perform this operation. ", err].join("").as_bytes().to_vec(),
+            headers: Vec::new(),
+            status_code: 405,
+            streaming_strategy: None,
+        }
+    }
 }
 
 #[query]
