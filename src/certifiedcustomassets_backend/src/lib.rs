@@ -17,7 +17,7 @@ use std::collections::HashMap;
 use ic_certified_map::{labeled, labeled_hash, AsHashTree, Hash, RbTree};
 use serde_bytes::ByteBuf;
 use crate::cert::{update_certified_data};
-use crate::http::build_certified_headers;
+use crate::http::{build_certified_headers, create_token, streaming_strategy};
 
 use crate::store::{commit_batch, create_batch, create_chunk, delete_asset, get_asset, get_asset_for_url, get_keys};
 use crate::utils::{principal_not_equal, is_manager};
@@ -138,35 +138,6 @@ fn http_request_streaming_callback(StreamingCallbackToken { token, headers, inde
             };
         }
     }
-}
-
-fn streaming_strategy(key: AssetKey, encoding: &AssetEncoding, headers: &Vec<HeaderField>) -> Option<StreamingStrategy> {
-    let streaming_token: Option<StreamingCallbackToken> = create_token(key, 0, encoding, headers);
-
-    match streaming_token {
-        None => None,
-        Some(streaming_token) => Some(StreamingStrategy::Callback {
-            callback: candid::Func {
-                method: "http_request_streaming_callback".to_string(),
-                principal: id(),
-            },
-            token: streaming_token,
-        })
-    }
-}
-
-fn create_token(key: AssetKey, chunk_index: usize, encoding: &AssetEncoding, headers: &Vec<HeaderField>) -> Option<StreamingCallbackToken> {
-    if chunk_index + 1 >= encoding.contentChunks.len() {
-        return None;
-    }
-
-    Some(StreamingCallbackToken {
-        fullPath: key.fullPath,
-        token: key.token,
-        headers: headers.clone(),
-        index: chunk_index + 1,
-        sha256: Some(ByteBuf::from(encoding.sha256)),
-    })
 }
 
 //

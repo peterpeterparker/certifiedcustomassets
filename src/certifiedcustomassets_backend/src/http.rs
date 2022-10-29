@@ -1,6 +1,38 @@
+use ic_cdk::id;
+use serde_bytes::ByteBuf;
 use crate::STATE;
 use crate::cert::{build_asset_certificate_header};
-use crate::types::{http::{HeaderField}, storage::{Asset}, store::{RuntimeState}};
+use crate::types::{http::{HeaderField, StreamingCallbackToken, StreamingStrategy}, storage::{Asset, AssetEncoding, AssetKey}, store::{RuntimeState}};
+
+pub fn streaming_strategy(key: AssetKey, encoding: &AssetEncoding, headers: &Vec<HeaderField>) -> Option<StreamingStrategy> {
+    let streaming_token: Option<StreamingCallbackToken> = create_token(key, 0, encoding, headers);
+
+    match streaming_token {
+        None => None,
+        Some(streaming_token) => Some(StreamingStrategy::Callback {
+            callback: candid::Func {
+                method: "http_request_streaming_callback".to_string(),
+                principal: id(),
+            },
+            token: streaming_token,
+        })
+    }
+}
+
+pub fn create_token(key: AssetKey, chunk_index: usize, encoding: &AssetEncoding, headers: &Vec<HeaderField>) -> Option<StreamingCallbackToken> {
+    if chunk_index + 1 >= encoding.contentChunks.len() {
+        return None;
+    }
+
+    Some(StreamingCallbackToken {
+        fullPath: key.fullPath,
+        token: key.token,
+        headers: headers.clone(),
+        index: chunk_index + 1,
+        sha256: Some(ByteBuf::from(encoding.sha256)),
+    })
+}
+
 
 pub fn build_certified_headers(asset: &Asset) -> Result<Vec<HeaderField>, &'static str> {
     STATE.with(|state| build_certified_headers_impl(asset, &state.borrow().runtime))
