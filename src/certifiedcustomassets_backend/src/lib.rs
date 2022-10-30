@@ -17,7 +17,7 @@ use std::collections::HashMap;
 use ic_certified_map::{labeled, labeled_hash, AsHashTree, Hash, RbTree};
 use serde_bytes::ByteBuf;
 use crate::cert::{update_certified_data};
-use crate::http::{build_certified_headers, create_token, streaming_strategy};
+use crate::http::{build_headers, create_token, streaming_strategy};
 
 use crate::store::{commit_batch, create_batch, create_chunk, delete_asset, get_asset, get_asset_for_url, get_keys};
 use crate::utils::{principal_not_equal, is_manager};
@@ -97,7 +97,7 @@ fn http_request(HttpRequest { method, url, headers: _, body: _ }: HttpRequest) -
 
     match result {
         Ok(asset) => {
-            let headers = build_certified_headers(&asset);
+            let headers = build_headers(&asset);
             let Asset { key, headers: _, encoding } = asset;
 
             match headers {
