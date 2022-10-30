@@ -91,6 +91,13 @@ const uploadAssets = async () => {
       fullPath: "/favicon.ico",
       mimeType: "image/x-icon"
     }),
+    uploadHtml({
+      src: "./data/social-img-test.jpeg",
+      name: "social-img-test.jpeg",
+      folder: "images",
+      fullPath: "/images/social-img-test.jpeg",
+      mimeType: "image/jpeg"
+    }),
   ]);
 };
 
