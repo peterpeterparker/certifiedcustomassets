@@ -98,6 +98,27 @@ const uploadAssets = async () => {
       fullPath: "/images/social-img-test.jpeg",
       mimeType: "image/jpeg"
     }),
+    uploadHtml({
+      src: "./data/icon-48x48.png",
+      name: "icon-48x48.png",
+      folder: "images",
+      fullPath: "/images/icon-48x48.png",
+      mimeType: "image/png"
+    }),
+    uploadHtml({
+      src: "./data/manifest.webmanifest",
+      name: "manifest.webmanifest",
+      folder: "resources",
+      fullPath: "/manifest.webmanifest",
+      mimeType: "application/json"
+    }),
+    uploadHtml({
+      src: "./data/robots.txt",
+      name: "robots.txt",
+      folder: "resources",
+      fullPath: "/robots.txt",
+      mimeType: "text/plain"
+    }),
   ]);
 };
 
